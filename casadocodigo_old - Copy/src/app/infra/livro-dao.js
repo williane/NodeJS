@@ -1,46 +1,35 @@
+const { promises } = require("fs");
+
 class LivroDao {
 
     constructor(db) {
         this._db = db;
     }
 
-    adiciona(livro) {
-        return new Promise((resolve, reject) => {
-            this._db.run(`
-                INSERT INTO livros (
-                    titulo, 
-                    preco,
-                    descricao
-                ) values (?,?,?)
-                `,
-                [
-                    livro.titulo,
-                    livro.preco,
-                    livro.descricao
-                ],
-                function (err) {
-                    if (err) {
-                        console.log(err);
-                        return reject('Não foi possível adicionar o livro!');
-                    }
-
-                    resolve();
-                }
-            )
-        });
-    }
-
     lista() {
         return new Promise((resolve, reject) => {
-            this._db.all(
-                'SELECT * FROM livros',
-                (erro, resultados) => {
-                    if (erro) return reject('Não foi possível listar os livros!');
-
-                    return resolve(resultados);
-                }
-            )
+            this._db.all('select * from livros', (erro, resultados) => {
+                if (erro) return reject(erro);
+                return resolve(resultados);
+            });
         });
+
+    }
+
+    adiciona(livro) {
+        return new Promise((resolve, reject) => {
+            this._db.run(
+                `insert into livros(titulo,preco,descricao) values(?,?,?)`,
+                [livro.titulo, livro.preco, livro.descricao],
+                function(err){
+                    if(err){
+                        console.log(err);
+                        return reject(err);
+                    }
+                    resolve();
+                } 
+            );
+        })
     }
 
     buscaPorId(id) {
@@ -62,7 +51,6 @@ class LivroDao {
             );
         });
     }
-
     atualiza(livro) {
         return new Promise((resolve, reject) => {
             this._db.run(`
@@ -91,7 +79,7 @@ class LivroDao {
     remove(id) {
 
         return new Promise((resolve, reject) => {
-            this._db.get(
+            this._db.run(
                 `
                     DELETE 
                     FROM livros
